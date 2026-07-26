@@ -40,6 +40,7 @@ vi.mock("gsap/SplitText", () => ({
 }));
 
 import {
+  default as defaultScrollTextReveal,
   scrollTextReveal,
   scrollTextRevealDefaults,
 } from "../src";
@@ -83,6 +84,10 @@ beforeEach(() => {
 });
 
 describe("scrollTextReveal", () => {
+  it("provides the same function as default and named exports", () => {
+    expect(defaultScrollTextReveal).toBe(scrollTextReveal);
+  });
+
   it("exposes the documented minimal defaults", () => {
     expect(scrollTextRevealDefaults).toEqual({
       duration: 0.85,

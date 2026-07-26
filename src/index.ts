@@ -1,4 +1,5 @@
 export {
+  scrollTextReveal as default,
   scrollTextReveal,
   scrollTextRevealDefaults,
 } from "./ScrollTextReveal.js";

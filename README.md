@@ -50,6 +50,16 @@ import { scrollTextReveal } from "scroll-text-reveal";
 scrollTextReveal("[data-scroll-text-reveal]");
 ```
 
+Default and named imports are both supported:
+
+```ts
+import scrollTextReveal from "scroll-text-reveal";
+```
+
+```ts
+import { scrollTextReveal } from "scroll-text-reveal";
+```
+
 The function accepts a CSS selector, one `HTMLElement`, or an iterable
 collection of `HTMLElement`s.
 
