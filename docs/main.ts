@@ -3,43 +3,73 @@ import {
   scrollTextRevealDefaults,
 } from "../src";
 
-scrollTextReveal("[data-reveal='hero']", {
-  animateInitiallyVisible: true,
-  delay: 0.2,
-  duration: 1,
+const replayButton = document.querySelector<HTMLButtonElement>("[data-replay]");
+const initialDefaultReveal = document.querySelector<HTMLElement>(
+  "[data-reveal='default']",
+);
+const initialScrollReveal = document.querySelector<HTMLElement>(
+  "[data-reveal='scroll']",
+);
+const scrollReplayStage = document.querySelector<HTMLElement>("[data-scroll-replay]");
+
+if (
+  !replayButton ||
+  !initialDefaultReveal ||
+  !initialScrollReveal ||
+  !scrollReplayStage
+) {
+  throw new Error("ScrollTextReveal demo elements are missing.");
+}
+
+let defaultReveal = initialDefaultReveal;
+const defaultMarkup = defaultReveal.innerHTML;
+const defaultTemplate = defaultReveal.cloneNode(false) as HTMLElement;
+let scrollReveal = initialScrollReveal;
+const scrollMarkup = scrollReveal.innerHTML;
+const scrollTemplate = scrollReveal.cloneNode(false) as HTMLElement;
+
+const playDefaultReveal = (): void => {
+  scrollTextReveal(defaultReveal, {
+    animateInitiallyVisible: true,
+  });
+};
+
+replayButton.addEventListener("click", () => {
+  const replacement = defaultTemplate.cloneNode(false) as HTMLElement;
+  replacement.innerHTML = defaultMarkup;
+  defaultReveal.replaceWith(replacement);
+  defaultReveal = replacement;
+  playDefaultReveal();
 });
 
-scrollTextReveal("[data-reveal='default']");
+playDefaultReveal();
 
-scrollTextReveal("[data-reveal='slow']", {
-  duration: 1.5,
-  stagger: 0.14,
-});
+const replayScrollReveal = (): void => {
+  const replacement = scrollTemplate.cloneNode(false) as HTMLElement;
+  replacement.innerHTML = scrollMarkup;
+  scrollReveal.replaceWith(replacement);
+  scrollReveal = replacement;
+  scrollTextReveal(scrollReveal, {
+    animateInitiallyVisible: true,
+  });
+};
 
-scrollTextReveal("[data-reveal='delay']", {
-  delay: 0.55,
-});
+const scrollReplayObserver = new IntersectionObserver(
+  entries => {
+    if (entries.some(entry => entry.isIntersecting)) {
+      replayScrollReveal();
+    }
+  },
+  {
+    rootMargin: "0px 0px -14% 0px",
+    threshold: 0,
+  },
+);
 
-scrollTextReveal("[data-reveal='tight']", {
-  duration: 0.65,
-  stagger: 0.035,
-  distance: 75,
-});
+scrollReplayObserver.observe(scrollReplayStage);
 
-scrollTextReveal("[data-reveal='deep']", {
-  duration: 1.05,
-  stagger: 0.12,
-  distance: 180,
-  start: 72,
-  ease: "expo.out",
-});
-
-scrollTextReveal("[data-reveal='soft']", {
-  duration: 1.2,
-  stagger: 0.08,
-  distance: 55,
-  start: 82,
-  ease: "power2.out",
+window.addEventListener("pagehide", () => {
+  scrollReplayObserver.disconnect();
 });
 
 Object.assign(window, {
