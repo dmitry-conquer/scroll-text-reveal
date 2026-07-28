@@ -448,7 +448,12 @@
 
         <div class="reveal-stage">
           <p class="example-kicker">Balanced by default</p>
-          <h2 class="reveal-copy" id="default-example" data-reveal="default">
+          <h2
+            class="reveal-copy"
+            id="default-example"
+            data-reveal="default"
+            data-scroll-text-reveal
+          >
             A quiet entrance that lets the words keep all the attention.
           </h2>
           <p class="supporting-copy">
@@ -473,7 +478,12 @@
 
         <div class="reveal-stage secondary" data-scroll-replay>
           <p class="example-kicker">Triggered by position</p>
-          <h2 class="reveal-copy" id="scroll-example" data-reveal="scroll">
+          <h2
+            class="reveal-copy"
+            id="scroll-example"
+            data-reveal="scroll"
+            data-scroll-text-reveal
+          >
             The next message arrives only when the page brings it into view.
           </h2>
           <p class="supporting-copy">
@@ -491,6 +501,7 @@
         <pre class="code-card"><code><span class="code-comment"># Install the library and its GSAP peer dependency</span>
 npm install scroll-text-reveal gsap
 
+<span class="code-keyword">import</span> <span class="code-string">"scroll-text-reveal/styles.css"</span>;
 <span class="code-keyword">import</span> { scrollTextReveal } <span class="code-keyword">from</span> <span class="code-string">"scroll-text-reveal"</span>;
 
 scrollTextReveal(<span class="code-string">"[data-scroll-text-reveal]"</span>);</code></pre>

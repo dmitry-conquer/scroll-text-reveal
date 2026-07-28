@@ -2,6 +2,7 @@ import {
   scrollTextReveal,
   scrollTextRevealDefaults,
 } from "../src";
+import "../src/styles.css";
 
 const replayButton = document.querySelector<HTMLButtonElement>("[data-replay]");
 const initialDefaultReveal = document.querySelector<HTMLElement>(

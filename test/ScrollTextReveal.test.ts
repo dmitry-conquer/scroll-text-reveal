@@ -2,9 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   registerPlugin: vi.fn(),
-  from: vi.fn(
+  set: vi.fn(),
+  to: vi.fn(
     (_targets: unknown, _vars: Record<string, unknown>) => ({
       animation: true,
+      totalTime: vi.fn(),
     }),
   ),
   splitCreate: vi.fn(
@@ -25,7 +27,8 @@ const mocks = vi.hoisted(() => ({
 vi.mock("gsap", () => ({
   default: {
     registerPlugin: mocks.registerPlugin,
-    from: mocks.from,
+    set: mocks.set,
+    to: mocks.to,
   },
 }));
 
@@ -66,7 +69,8 @@ const setBounds = (
 beforeEach(() => {
   document.body.innerHTML = "";
   mocks.registerPlugin.mockClear();
-  mocks.from.mockClear();
+  mocks.set.mockClear();
+  mocks.to.mockClear();
   mocks.splitCreate.mockClear();
   vi.stubGlobal(
     "matchMedia",
@@ -117,9 +121,13 @@ describe("scrollTextReveal", () => {
       autoSplit: true,
       aria: "auto",
     });
-    expect(mocks.from).toHaveBeenCalledWith(expect.any(Array), {
+    expect(mocks.set).toHaveBeenCalledWith(expect.any(Array), {
       yPercent: 115,
       opacity: 0,
+    });
+    expect(mocks.to).toHaveBeenCalledWith(expect.any(Array), {
+      yPercent: 0,
+      opacity: 1,
       duration: 0.85,
       delay: 0,
       stagger: 0.1,
@@ -130,6 +138,10 @@ describe("scrollTextReveal", () => {
         once: true,
       },
     });
+    expect(heading!.getAttribute("data-scroll-text-reveal-ready")).toBe("");
+    expect(mocks.set.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.to.mock.invocationCallOrder[0]!,
+    );
   });
 
   it("applies the supported animation options", () => {
@@ -146,19 +158,23 @@ describe("scrollTextReveal", () => {
       ease: "expo.out",
     });
 
-    expect(mocks.from).toHaveBeenCalledWith(
+    expect(mocks.to).toHaveBeenCalledWith(
       expect.any(Array),
       expect.objectContaining({
         duration: 1.4,
         delay: 0.3,
         stagger: 0.18,
-        yPercent: 80,
+        yPercent: 0,
         ease: "expo.out",
         scrollTrigger: expect.objectContaining({
           start: "top 70%",
         }),
       }),
     );
+    expect(mocks.set).toHaveBeenCalledWith(expect.any(Array), {
+      yPercent: 80,
+      opacity: 0,
+    });
   });
 
   it("skips initially visible elements by default", () => {
@@ -169,7 +185,8 @@ describe("scrollTextReveal", () => {
     scrollTextReveal(heading);
 
     expect(mocks.splitCreate).not.toHaveBeenCalled();
-    expect(mocks.from).not.toHaveBeenCalled();
+    expect(mocks.to).not.toHaveBeenCalled();
+    expect(heading.getAttribute("data-scroll-text-reveal-ready")).toBe("");
   });
 
   it("animates initially visible elements immediately when enabled", () => {
@@ -183,13 +200,13 @@ describe("scrollTextReveal", () => {
     });
 
     expect(mocks.splitCreate).toHaveBeenCalledOnce();
-    expect(mocks.from).toHaveBeenCalledWith(
+    expect(mocks.to).toHaveBeenCalledWith(
       expect.any(Array),
       expect.not.objectContaining({
         scrollTrigger: expect.anything(),
       }),
     );
-    expect(mocks.from.mock.calls[0]?.[1]).toMatchObject({
+    expect(mocks.to.mock.calls[0]?.[1]).toMatchObject({
       delay: 0.25,
     });
   });
@@ -220,6 +237,7 @@ describe("scrollTextReveal", () => {
     scrollTextReveal(heading);
 
     expect(mocks.splitCreate).not.toHaveBeenCalled();
+    expect(heading.getAttribute("data-scroll-text-reveal-ready")).toBe("");
   });
 
   it("does not initialize an element twice", () => {
@@ -231,6 +249,19 @@ describe("scrollTextReveal", () => {
     scrollTextReveal(heading);
 
     expect(mocks.splitCreate).toHaveBeenCalledOnce();
+  });
+
+  it("reveals a prepared element if initialization fails", () => {
+    const heading = document.createElement("h2");
+    heading.setAttribute("data-scroll-text-reveal", "");
+    document.body.append(heading);
+    setBounds(heading, 1000);
+    mocks.splitCreate.mockImplementationOnce(() => {
+      throw new Error("SplitText failed");
+    });
+
+    expect(() => scrollTextReveal(heading)).toThrow("SplitText failed");
+    expect(heading.getAttribute("data-scroll-text-reveal-ready")).toBe("");
   });
 
   it("allows an initially skipped element to be explicitly animated later", () => {

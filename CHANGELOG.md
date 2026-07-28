@@ -6,6 +6,21 @@ The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.2] - 2026-07-28
+
+### Fixed
+
+- Prevented reveal targets from flashing in their final state before the
+  animation starts
+- Made the initial line state explicit before creating the reveal tween
+- Ensured skipped and reduced-motion targets remain visible when using the
+  no-flash stylesheet
+
+### Added
+
+- Optional `scroll-text-reveal/styles.css` export for hiding marked text until
+  initialization
+
 ## [0.2.1] - 2026-07-26
 
 ### Added

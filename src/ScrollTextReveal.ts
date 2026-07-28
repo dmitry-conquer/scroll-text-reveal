@@ -24,7 +24,7 @@ export interface ScrollTextRevealOptions {
   distance?: number;
   /** Viewport percentage at which the animation starts. */
   start?: number;
-  /** Any GSAP ease name accepted by gsap.from(). */
+  /** Any GSAP ease name accepted by gsap.to(). */
   ease?: string;
   /** Animate elements already visible when scrollTextReveal() is called. */
   animateInitiallyVisible?: boolean;
@@ -54,6 +54,7 @@ type ResolvedOptions = Required<ScrollTextRevealOptions>;
 
 const initializedElements = new WeakSet<HTMLElement>();
 let pluginsRegistered = false;
+const readyAttribute = "data-scroll-text-reveal-ready";
 
 const registerPlugins = (): void => {
   if (pluginsRegistered) return;
@@ -130,6 +131,10 @@ const isVisibleInViewport = (element: HTMLElement): boolean => {
   return bounds.top < window.innerHeight && bounds.bottom > 0;
 };
 
+const markReady = (element: HTMLElement): void => {
+  element.setAttribute(readyAttribute, "");
+};
+
 /**
  * Reveals text line by line when it enters the viewport.
  *
@@ -154,10 +159,12 @@ export const scrollTextReveal = (
   const resolved = resolveOptions(options);
   const elements = resolveTargets(target);
 
-  if (
-    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ||
-    elements.length === 0
-  ) {
+  if (elements.length === 0) {
+    return;
+  }
+
+  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+    elements.forEach(markReady);
     return;
   }
 
@@ -167,33 +174,48 @@ export const scrollTextReveal = (
     if (initializedElements.has(element)) continue;
 
     const initiallyVisible = isVisibleInViewport(element);
-    if (initiallyVisible && !resolved.animateInitiallyVisible) continue;
+    if (initiallyVisible && !resolved.animateInitiallyVisible) {
+      markReady(element);
+      continue;
+    }
 
-    SplitText.create(element, {
-      type: "lines",
-      mask: "lines",
-      linesClass: "scroll-text-reveal-line",
-      autoSplit: true,
-      aria: "auto",
-      onSplit: split =>
-        gsap.from(split.lines, {
-          yPercent: resolved.distance,
-          opacity: 0,
-          duration: resolved.duration,
-          delay: resolved.delay,
-          stagger: resolved.stagger,
-          ease: resolved.ease,
-          ...(initiallyVisible
-            ? {}
-            : {
-                scrollTrigger: {
-                  trigger: element,
-                  start: `top ${resolved.start}%`,
-                  once: true,
-                },
-              }),
-        }),
-    });
+    try {
+      SplitText.create(element, {
+        type: "lines",
+        mask: "lines",
+        linesClass: "scroll-text-reveal-line",
+        autoSplit: true,
+        aria: "auto",
+        onSplit: split => {
+          gsap.set(split.lines, {
+            yPercent: resolved.distance,
+            opacity: 0,
+          });
+          markReady(element);
+
+          return gsap.to(split.lines, {
+            yPercent: 0,
+            opacity: 1,
+            duration: resolved.duration,
+            delay: resolved.delay,
+            stagger: resolved.stagger,
+            ease: resolved.ease,
+            ...(initiallyVisible
+              ? {}
+              : {
+                  scrollTrigger: {
+                    trigger: element,
+                    start: `top ${resolved.start}%`,
+                    once: true,
+                  },
+                }),
+          });
+        },
+      });
+    } catch (error) {
+      markReady(element);
+      throw error;
+    }
 
     initializedElements.add(element);
   }

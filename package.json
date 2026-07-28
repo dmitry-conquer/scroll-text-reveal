@@ -1,6 +1,6 @@
 {
   "name": "scroll-text-reveal",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A tiny GSAP-powered line reveal for text entering the viewport.",
   "keywords": [
     "text-reveal",
@@ -18,7 +18,9 @@
     "url": "https://github.com/dmitry-conquer/scroll-text-reveal/issues"
   },
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "**/*.css"
+  ],
   "packageManager": "pnpm@11.10.0",
   "publishConfig": {
     "access": "public",
@@ -35,11 +37,12 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-    }
+    },
+    "./styles.css": "./dist/styles.css"
   },
   "scripts": {
     "dev": "vite --config vite.docs.config.ts --open",
-    "build": "tsup src/index.ts --format esm,cjs --clean --minify && tsc -p tsconfig.build.json",
+    "build": "tsup src/index.ts src/styles.css --format esm,cjs --clean --minify && tsc -p tsconfig.build.json",
     "build:docs": "vite build --config vite.docs.config.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",

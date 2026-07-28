@@ -6,6 +6,7 @@ viewport. Built for static websites with GSAP, ScrollTrigger, and SplitText.
 ## Features
 
 - Line-by-line masked text reveal
+- Flash-free initialization with the optional companion stylesheet
 - One small function and seven practical options
 - Configurable duration, trigger delay, line stagger, distance, start position,
   and easing
@@ -62,6 +63,20 @@ import { scrollTextReveal } from "scroll-text-reveal";
 
 The function accepts a CSS selector, one `HTMLElement`, or an iterable
 collection of `HTMLElement`s.
+
+### Preventing the initial text flash
+
+The library works without CSS. However, the original text may briefly appear
+before JavaScript initializes the animation. To prevent this, import the
+optional stylesheet:
+
+```ts
+import "scroll-text-reveal/styles.css";
+import { scrollTextReveal } from "scroll-text-reveal";
+```
+
+It hides `[data-scroll-text-reveal]` elements until their animation is ready.
+If JavaScript does not run, these elements remain hidden.
 
 ## Configuration
 
@@ -132,7 +147,7 @@ that has already been initialized is ignored.
 ## Accessibility
 
 When a visitor requests reduced motion, the function returns before splitting
-or animating any text.
+or animating any text and removes the stylesheet's pending state.
 
 SplitText uses `aria: "auto"` so the original text is exposed as a single
 accessible label while generated lines are hidden from screen readers. For text
