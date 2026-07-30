@@ -1,6 +1,6 @@
 {
   "name": "scroll-text-reveal",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "A tiny GSAP-powered line reveal for text entering the viewport.",
   "keywords": [
     "text-reveal",

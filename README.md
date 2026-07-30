@@ -33,6 +33,24 @@ yarn add scroll-text-reveal gsap
 
 GSAP 3.13 or newer is required.
 
+### CDN
+
+```html
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/scroll-text-reveal/dist/styles.css"
+>
+
+<script type="module">
+  import scrollTextReveal from "https://cdn.jsdelivr.net/npm/scroll-text-reveal/+esm";
+
+  scrollTextReveal("[data-scroll-text-reveal]");
+</script>
+```
+
+The jsDelivr ESM endpoint resolves the required GSAP modules. The stylesheet is
+optional and prevents marked text from flashing before initialization.
+
 ## Quick start
 
 Add a selector to the text you want to reveal:
