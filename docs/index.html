@@ -428,8 +428,8 @@
 
       <section class="intro">
         <p>
-          A focused line-by-line text reveal for static websites. The first example
-          can be replayed; the second waits until it reaches the viewport.
+          A masked text reveal for static websites. Replay the line animation or
+          scroll down to see the word wave.
         </p>
       </section>
 
@@ -469,15 +469,15 @@
 
       <section class="reveal-section" aria-labelledby="scroll-example">
         <div class="example-header">
-          <span class="section-label">02 / On scroll</span>
+          <span class="section-label">02 / Word wave</span>
           <div class="example-actions">
-            <span class="option">default options</span>
-            <span class="option">demo replay</span>
+            <span class="option">split: words</span>
+            <span class="option">38 ms stagger</span>
           </div>
         </div>
 
         <div class="reveal-stage secondary" data-scroll-replay>
-          <p class="example-kicker">Triggered by position</p>
+          <p class="example-kicker">On scroll</p>
           <h2
             class="reveal-copy"
             id="scroll-example"
@@ -487,7 +487,8 @@
             The next message arrives only when the page brings it into view.
           </h2>
           <p class="supporting-copy">
-            This demo starts a fresh reveal whenever the heading enters the viewport.
+            Each word slides up through its own mask. The demo repeats when the
+            heading enters the viewport again.
           </p>
         </div>
       </section>

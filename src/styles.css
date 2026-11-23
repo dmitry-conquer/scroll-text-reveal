@@ -1,9 +1,5 @@
-[data-scroll-text-reveal]:not([data-scroll-text-reveal-ready]) {
-  visibility: hidden;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  [data-scroll-text-reveal]:not([data-scroll-text-reveal-ready]) {
-    visibility: visible;
+@media (prefers-reduced-motion: no-preference) {
+  [data-scroll-text-reveal][data-scroll-text-reveal-pending] {
+    visibility: hidden;
   }
 }

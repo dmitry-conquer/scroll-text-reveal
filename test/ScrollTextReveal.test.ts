@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const revertSplit = vi.hoisted(() => vi.fn());
 const mocks = vi.hoisted(() => ({
   registerPlugin: vi.fn(),
   set: vi.fn(),
@@ -13,13 +14,20 @@ const mocks = vi.hoisted(() => ({
     (
       _element: HTMLElement,
       config: {
-        onSplit: (split: { lines: HTMLElement[] }) => unknown;
+        onSplit: (split: {
+          lines: HTMLElement[];
+          words: HTMLElement[];
+          revert: () => void;
+        }) => unknown;
       },
     ) => {
-      config.onSplit({
+      const split = {
         lines: [document.createElement("div"), document.createElement("div")],
-      });
-      return { split: true };
+        words: [document.createElement("span"), document.createElement("span")],
+        revert: revertSplit,
+      };
+      config.onSplit(split);
+      return split;
     },
   ),
 }));
@@ -69,6 +77,7 @@ const setBounds = (
 beforeEach(() => {
   document.body.innerHTML = "";
   mocks.registerPlugin.mockClear();
+  revertSplit.mockClear();
   mocks.set.mockClear();
   mocks.to.mockClear();
   mocks.splitCreate.mockClear();
@@ -94,6 +103,7 @@ describe("scrollTextReveal", () => {
 
   it("exposes the documented minimal defaults", () => {
     expect(scrollTextRevealDefaults).toEqual({
+      split: "lines",
       duration: 0.85,
       delay: 0,
       stagger: 0.1,
@@ -139,9 +149,59 @@ describe("scrollTextReveal", () => {
       },
     });
     expect(heading!.getAttribute("data-scroll-text-reveal-ready")).toBe("");
+    expect(heading!.hasAttribute("data-scroll-text-reveal-pending")).toBe(false);
     expect(mocks.set.mock.invocationCallOrder[0]).toBeLessThan(
       mocks.to.mock.invocationCallOrder[0]!,
     );
+  });
+
+  it("slides individually masked words in a wave without fading", () => {
+    const heading = document.createElement("h2");
+    document.body.append(heading);
+    setBounds(heading, 1200);
+
+    scrollTextReveal(heading, { split: "words" });
+
+    expect(mocks.splitCreate.mock.calls[0]?.[1]).toMatchObject({
+      type: "words",
+      mask: "words",
+      wordsClass: "scroll-text-reveal-word",
+      aria: "auto",
+    });
+    const pieces = mocks.splitCreate.mock.results[0]!.value.words;
+    expect(mocks.set).toHaveBeenCalledWith(pieces, { yPercent: 105 });
+    expect(mocks.to).toHaveBeenCalledWith(pieces, {
+      yPercent: 0,
+      duration: 1.1,
+      delay: 0,
+      stagger: 0.038,
+      ease: "power3.out",
+      scrollTrigger: { trigger: heading, start: "top 86%", once: true },
+    });
+  });
+
+  it("allows custom wave timing for an initially visible heading", () => {
+    const heading = document.createElement("h2");
+    document.body.append(heading);
+    setBounds(heading, 100);
+
+    scrollTextReveal(heading, {
+      split: "words",
+      animateInitiallyVisible: true,
+      duration: 0.7,
+      stagger: 0,
+      distance: 120,
+    });
+
+    const pieces = mocks.splitCreate.mock.results[0]!.value.words;
+    expect(mocks.set).toHaveBeenCalledWith(pieces, { yPercent: 120 });
+    expect(mocks.to).toHaveBeenCalledWith(pieces, {
+      yPercent: 0,
+      duration: 0.7,
+      delay: 0,
+      stagger: 0,
+      ease: "power3.out",
+    });
   });
 
   it("applies the supported animation options", () => {
@@ -234,10 +294,11 @@ describe("scrollTextReveal", () => {
     document.body.append(heading);
     setBounds(heading, 1000);
 
-    scrollTextReveal(heading);
+    scrollTextReveal(heading, { split: "words" });
 
     expect(mocks.splitCreate).not.toHaveBeenCalled();
     expect(heading.getAttribute("data-scroll-text-reveal-ready")).toBe("");
+    expect(heading.hasAttribute("data-scroll-text-reveal-pending")).toBe(false);
   });
 
   it("does not initialize an element twice", () => {
@@ -256,12 +317,29 @@ describe("scrollTextReveal", () => {
     heading.setAttribute("data-scroll-text-reveal", "");
     document.body.append(heading);
     setBounds(heading, 1000);
-    mocks.splitCreate.mockImplementationOnce(() => {
+    mocks.splitCreate.mockImplementationOnce(element => {
+      expect(element.getAttribute("data-scroll-text-reveal-pending")).toBe("");
       throw new Error("SplitText failed");
     });
 
     expect(() => scrollTextReveal(heading)).toThrow("SplitText failed");
     expect(heading.getAttribute("data-scroll-text-reveal-ready")).toBe("");
+    expect(heading.hasAttribute("data-scroll-text-reveal-pending")).toBe(false);
+  });
+
+  it("reverts the split and permits retry when tween creation fails", () => {
+    const heading = document.createElement("h2");
+    document.body.append(heading);
+    setBounds(heading, 1000);
+    mocks.to.mockImplementationOnce(() => {
+      throw new Error("Tween failed");
+    });
+
+    expect(() => scrollTextReveal(heading, { split: "words" })).toThrow("Tween failed");
+    expect(revertSplit).toHaveBeenCalledOnce();
+    expect(heading.hasAttribute("data-scroll-text-reveal-pending")).toBe(false);
+    expect(() => scrollTextReveal(heading, { split: "words" })).not.toThrow();
+    expect(mocks.splitCreate).toHaveBeenCalledTimes(2);
   });
 
   it("allows an initially skipped element to be explicitly animated later", () => {
@@ -292,5 +370,6 @@ describe("scrollTextReveal", () => {
     );
     expect(() => scrollTextReveal(heading, { start: 101 })).toThrow(/start/);
     expect(() => scrollTextReveal(heading, { ease: " " })).toThrow(/ease/);
+    expect(() => scrollTextReveal(heading, { split: "chars" as "words" })).toThrow(/split/);
   });
 });

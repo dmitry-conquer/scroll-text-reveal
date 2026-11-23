@@ -6,6 +6,17 @@ The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-11-23
+
+### Added
+
+- Optional `split: "words"` mode with a mask per word and 38 ms between starts.
+- A word-wave example in the demo.
+
+### Fixed
+
+- Marked text stays visible if JavaScript is disabled or the library fails to load.
+
 ## [0.2.3] - 2026-07-30
 
 ### Changed

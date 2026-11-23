@@ -1,14 +1,13 @@
 # scroll-text-reveal
 
-A tiny TypeScript library that reveals text line by line when it enters the
+A tiny TypeScript library that reveals text by line or word when it enters the
 viewport. Built for static websites with GSAP, ScrollTrigger, and SplitText.
 
 ## Features
 
-- Line-by-line masked text reveal
-- Flash-free initialization with the optional companion stylesheet
-- One small function and seven practical options
-- Configurable duration, trigger delay, line stagger, distance, start position,
+- Masked reveal by line or word, with a wave effect in word mode
+- Readable text when JavaScript is unavailable
+- Configurable duration, trigger delay, stagger, distance, start position,
   and easing
 - Optional animation for elements visible during initialization
 - Responsive line re-splitting after font loading and width changes
@@ -48,8 +47,8 @@ GSAP 3.13 or newer is required.
 </script>
 ```
 
-The jsDelivr ESM endpoint resolves the required GSAP modules. The stylesheet is
-optional and prevents marked text from flashing before initialization.
+The jsDelivr ESM endpoint resolves the required GSAP modules. The optional
+stylesheet keeps marked text hidden while the library prepares its animation.
 
 ## Quick start
 
@@ -82,24 +81,24 @@ import { scrollTextReveal } from "scroll-text-reveal";
 The function accepts a CSS selector, one `HTMLElement`, or an iterable
 collection of `HTMLElement`s.
 
-### Preventing the initial text flash
+### Optional stylesheet
 
-The library works without CSS. However, the original text may briefly appear
-before JavaScript initializes the animation. To prevent this, import the
-optional stylesheet:
+Import the stylesheet to hide marked targets during animation setup.
 
 ```ts
 import "scroll-text-reveal/styles.css";
 import { scrollTextReveal } from "scroll-text-reveal";
 ```
 
-It hides `[data-scroll-text-reveal]` elements until their animation is ready.
-If JavaScript does not run, these elements remain hidden.
+Marked text is visible before initialization and when JavaScript is unavailable.
+If an initially visible heading is configured to animate and the script loads
+after the first paint, the heading can briefly appear in its original state.
 
 ## Configuration
 
 ```ts
 scrollTextReveal(".reveal-heading", {
+  split: "lines",
   duration: 0.85,
   delay: 0,
   stagger: 0.1,
@@ -112,16 +111,26 @@ scrollTextReveal(".reveal-heading", {
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `duration` | `number` | `0.85` | Animation duration in seconds |
+| `split` | `"lines"` or `"words"` | `"lines"` | Unit of the reveal and its mask |
+| `duration` | `number` | `0.85` for lines, `1.1` for words | Animation duration in seconds |
 | `delay` | `number` | `0` | Pause after the element reaches its viewport start position |
-| `stagger` | `number` | `0.1` | Delay between consecutive lines in seconds |
-| `distance` | `number` | `115` | Initial vertical offset as a percentage of each line |
+| `stagger` | `number` | `0.1` for lines, `0.038` for words | Delay between consecutive starts in seconds |
+| `distance` | `number` | `115` for lines, `105` for words | Initial vertical offset as a percentage of each line or word |
 | `start` | `number` | `86` | Viewport percentage at which the reveal starts |
 | `ease` | `string` | `power3.out` | GSAP easing name |
 | `animateInitiallyVisible` | `boolean` | `false` | Animate text already visible during initialization |
 
 `start: 86` means that the animation is triggered when the top of the element
 reaches a point 86% down the viewport.
+
+### Word wave
+
+Use `split: "words"` to slide each word up through its own mask. Each word starts
+38 ms after the previous one by default. The stagger continues across line breaks.
+
+```ts
+scrollTextReveal(".wave-heading", { split: "words" });
+```
 
 ### Delayed reveal
 
@@ -164,11 +173,11 @@ that has already been initialized is ignored.
 
 ## Accessibility
 
-When a visitor requests reduced motion, the function returns before splitting
-or animating any text and removes the stylesheet's pending state.
+When a visitor requests reduced motion, the text stays visible in its original
+markup.
 
 SplitText uses `aria: "auto"` so the original text is exposed as a single
-accessible label while generated lines are hidden from screen readers. For text
+accessible label while generated lines or words are hidden from screen readers. For text
 containing interactive nested elements such as links, review the alternative
 accessibility strategy in the
 [SplitText documentation](https://gsap.com/docs/v3/Plugins/SplitText/).

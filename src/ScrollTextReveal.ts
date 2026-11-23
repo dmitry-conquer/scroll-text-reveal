@@ -11,16 +11,18 @@ export type ScrollTextRevealTarget =
   | Iterable<HTMLElement>;
 
 /**
- * Controls the line reveal animation.
+ * Controls the masked text reveal animation.
  */
 export interface ScrollTextRevealOptions {
+  /** Reveal whole lines or individual words. Defaults to lines. */
+  split?: "lines" | "words";
   /** Animation duration in seconds. */
   duration?: number;
   /** Delay in seconds after the element reaches its viewport start position. */
   delay?: number;
-  /** Delay in seconds between consecutive lines. */
+  /** Delay in seconds between consecutive lines or words. */
   stagger?: number;
-  /** Initial vertical offset as a percentage of each line. */
+  /** Initial vertical offset as a percentage of each line or word. */
   distance?: number;
   /** Viewport percentage at which the animation starts. */
   start?: number;
@@ -31,6 +33,7 @@ export interface ScrollTextRevealOptions {
 }
 
 export interface ScrollTextRevealDefaults {
+  readonly split: "lines";
   readonly duration: number;
   readonly delay: number;
   readonly stagger: number;
@@ -41,6 +44,7 @@ export interface ScrollTextRevealDefaults {
 }
 
 export const scrollTextRevealDefaults: ScrollTextRevealDefaults = Object.freeze({
+  split: "lines",
   duration: 0.85,
   delay: 0,
   stagger: 0.1,
@@ -55,6 +59,7 @@ type ResolvedOptions = Required<ScrollTextRevealOptions>;
 const initializedElements = new WeakSet<HTMLElement>();
 let pluginsRegistered = false;
 const readyAttribute = "data-scroll-text-reveal-ready";
+const pendingAttribute = "data-scroll-text-reveal-pending";
 
 const registerPlugins = (): void => {
   if (pluginsRegistered) return;
@@ -106,7 +111,17 @@ const finiteNumber = (
 };
 
 const resolveOptions = (options: ScrollTextRevealOptions): ResolvedOptions => {
-  const resolved = { ...scrollTextRevealDefaults, ...options };
+  const { split = scrollTextRevealDefaults.split } = options;
+  if (split !== "lines" && split !== "words") {
+    throw new TypeError('scrollTextReveal option "split" must be "lines" or "words".');
+  }
+
+  const resolved = {
+    ...scrollTextRevealDefaults,
+    ...(split === "words" ? { duration: 1.1, stagger: 0.038, distance: 105 } : {}),
+    ...options,
+    split,
+  };
 
   finiteNumber("duration", resolved.duration, 0);
   finiteNumber("delay", resolved.delay, 0);
@@ -132,11 +147,12 @@ const isVisibleInViewport = (element: HTMLElement): boolean => {
 };
 
 const markReady = (element: HTMLElement): void => {
+  element.removeAttribute(pendingAttribute);
   element.setAttribute(readyAttribute, "");
 };
 
 /**
- * Reveals text line by line when it enters the viewport.
+ * Reveals text by line or word when it enters the viewport.
  *
  * Calling the function more than once for the same element is safe: an element
  * is initialized only once.
@@ -170,6 +186,7 @@ export const scrollTextReveal = (
 
   registerPlugins();
 
+  const byLine = resolved.split === "lines";
   for (const element of elements) {
     if (initializedElements.has(element)) continue;
 
@@ -179,23 +196,27 @@ export const scrollTextReveal = (
       continue;
     }
 
+    element.setAttribute(pendingAttribute, "");
+    let activeSplit: SplitText | undefined;
     try {
       SplitText.create(element, {
-        type: "lines",
-        mask: "lines",
-        linesClass: "scroll-text-reveal-line",
-        autoSplit: true,
+        type: resolved.split,
+        mask: resolved.split,
+        ...(byLine
+          ? { linesClass: "scroll-text-reveal-line", autoSplit: true }
+          : { wordsClass: "scroll-text-reveal-word" }),
         aria: "auto",
         onSplit: split => {
-          gsap.set(split.lines, {
+          activeSplit = split;
+          const pieces = split[resolved.split];
+          gsap.set(pieces, {
             yPercent: resolved.distance,
-            opacity: 0,
+            ...(byLine ? { opacity: 0 } : {}),
           });
-          markReady(element);
 
-          return gsap.to(split.lines, {
+          return gsap.to(pieces, {
             yPercent: 0,
-            opacity: 1,
+            ...(byLine ? { opacity: 1 } : {}),
             duration: resolved.duration,
             delay: resolved.delay,
             stagger: resolved.stagger,
@@ -213,8 +234,10 @@ export const scrollTextReveal = (
         },
       });
     } catch (error) {
-      markReady(element);
+      activeSplit?.revert();
       throw error;
+    } finally {
+      markReady(element);
     }
 
     initializedElements.add(element);

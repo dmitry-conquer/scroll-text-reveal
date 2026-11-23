@@ -1,7 +1,7 @@
 {
   "name": "scroll-text-reveal",
-  "version": "0.2.3",
-  "description": "A tiny GSAP-powered line reveal for text entering the viewport.",
+  "version": "0.3.0",
+  "description": "A tiny GSAP-powered line and word reveal for text entering the viewport.",
   "keywords": [
     "text-reveal",
     "scroll-animation",

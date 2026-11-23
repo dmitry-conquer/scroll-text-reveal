@@ -51,6 +51,7 @@ const replayScrollReveal = (): void => {
   scrollReveal.replaceWith(replacement);
   scrollReveal = replacement;
   scrollTextReveal(scrollReveal, {
+    split: "words",
     animateInitiallyVisible: true,
   });
 };
